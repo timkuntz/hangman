@@ -39,6 +39,16 @@ defmodule Hangman.Impl.Game do
     |> return_with_tally
   end
 
+  @spec tally(t) :: Type.tally
+  def tally(game) do
+    %{
+      turns_left: game.turns_left,
+      game_state: game.game_state,
+      letters: reveal_guessed_letters(game),
+      used: game.used |> MapSet.to_list |> Enum.sort
+    }
+  end
+
   defp validate_guess(game, guess, length, ascii_value)
     when length == 1 and ascii_value >= 97 and ascii_value <= 122 do
 
@@ -62,15 +72,6 @@ defmodule Hangman.Impl.Game do
     { game, tally(game) }
   end
 
-  defp tally(game) do
-    %{
-      turns_left: game.turns_left,
-      game_state: game.game_state,
-      letters: reveal_guessed_letters(game),
-      used: game.used |> MapSet.to_list |> Enum.sort
-    }
-  end
-
   defp score_guess(game, _good_guess = true) do
     new_state = maybe_won(MapSet.subset?(MapSet.new(game.letters), game.used))
     %{ game | game_state: new_state }
@@ -86,6 +87,10 @@ defmodule Hangman.Impl.Game do
 
   defp maybe_won(true), do: :won
   defp maybe_won(_), do: :good_guess
+
+  defp reveal_guessed_letters(game = %{ game_state: :lost }) do
+    game.letters
+  end
 
   defp reveal_guessed_letters(game) do
     game.letters
