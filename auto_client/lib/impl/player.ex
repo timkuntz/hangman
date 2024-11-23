@@ -28,7 +28,7 @@ defmodule AutoClient.Impl.Player do
     IO.puts feedback_for(tally)
     IO.puts current_word(tally)
 
-    { guess, unused } = get_guess(unused)
+    { guess, unused } = get_guess(unused, tally)
     { game, tally } = Hangman.make_move(game, guess)
     # IO.inspect tally
     # IO.puts "========"
@@ -56,13 +56,33 @@ defmodule AutoClient.Impl.Player do
     Enum.map(97..122, fn i -> <<i::utf8>> end)
   end
 
-  defp get_guess(unused) do
-    guess = unused |> Enum.random
-    { guess, remove_guess(unused, guess) }
+  defp get_guess(unused, tally) do
+    { letter, _count } = tally.letters
+      |> List.to_string()
+      |> String.replace("_", ".")
+      |> Dictionary.words_matching()
+      |> most_frequent_letter(tally.used)
+    { letter, remove_guess(unused, letter) }
   end
 
   defp remove_guess(unused, guess) do
     unused |> Enum.reject(fn x -> x == guess end)
+  end
+
+  def most_frequent_letter(words, used) do
+    words
+    |> Enum.flat_map(&String.graphemes/1)
+    |> Enum.reject(&Enum.member?(used, &1))
+    |> Enum.uniq
+    |> Enum.reduce(%{}, fn letter, acc -> Map.put(acc, letter, count_words_containing_letter(words, letter)) end)
+    |> Enum.sort(fn {_, countA}, {_, countB} -> countA >= countB end)
+    |> List.first()
+  end
+
+  defp count_words_containing_letter(words, letter) do
+    words
+    |> Enum.filter(&String.contains?(&1, letter))
+    |> Enum.count()
   end
 
 end
