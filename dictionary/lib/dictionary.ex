@@ -1,24 +1,17 @@
 defmodule Dictionary do
 
-  # this is a "module attribute"
-  # it is evaluated at compile time
-  @word_list "assets/words.txt"
-    |> File.read!()
-    |> String.split(~r/\n/, trim: true)
+  alias Dictionary.Impl.WordList
 
-  def random_word do
-    @word_list
-    |> Enum.random()
-  end
+  @opaque t :: WordList.t
 
-  def words_matching(pattern) do
-    @word_list
-    |> Enum.filter(&String.match?(&1, ~r/^#{pattern}$/))
-  end
+  @spec start() :: t
+  defdelegate start, to: WordList, as: :word_list
 
-  def words_matching(words, pattern) do
-    words
-    |> Enum.filter(&String.match?(&1, ~r/^#{pattern}$/))
-  end
+  @spec random_word(t) :: String.t
+  defdelegate random_word(word_list), to: WordList
+
+  defdelegate words_matching(pattern), to: WordList
+
+  defdelegate words_matching(word_list, pattern), to: WordList
 
 end
